@@ -1,0 +1,34 @@
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+pyaudio>=0.2.11
+matplotlib>=3.5.0
+scipy>=1.8.0
+
+# Optional dependencies for enhanced functionality
+# Uncomment as needed based on your hardware setup
+
+# For skeleton tracking
+# mediapipe>=0.8.10
+# tensorflow>=2.8.0
+
+# For mmWave processing
+# pyserial>=3.5
+# h5py>=3.6.0
+
+# For advanced audio processing
+# librosa>=0.9.0
+# soundfile>=0.10.0
+
+# For data management
+# pandas>=1.4.0
+# h5py>=3.6.0
+
+# For web interface (optional)
+# flask>=2.0.0
+# flask-socketio>=5.0.0
+
+# Development dependencies
+# pytest>=7.0.0
+# black>=22.0.0
+# flake8>=4.0.0
