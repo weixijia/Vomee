@@ -1,0 +1,23 @@
+# Vomee Multi-Modal Data Capture System Dependencies
+
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+
+# PyQt5 and PyQtGraph for GUI
+PyQt5>=5.15.0
+pyqtgraph>=0.12.0
+
+# GPU-accelerated processing
+cupy-cuda11x>=10.0.0  # Adjust cuda version as needed (cuda11x, cuda12x, etc.)
+
+# MediaPipe for skeleton detection (optional)
+mediapipe>=0.9.0
+
+# Note: For CuPy, install the version matching your CUDA version:
+# - cupy-cuda11x for CUDA 11.x
+# - cupy-cuda12x for CUDA 12.x
+# - cupy for automatic detection (may not work on all systems)
+#
+# If no NVIDIA GPU is available, the system will fail to process mmWave data.
+# Consider adding a CPU fallback using numpy.fft if needed.
