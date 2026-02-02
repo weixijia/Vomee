@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![MobiCom 2024](https://img.shields.io/badge/MobiCom-2024-green.svg)](https://sigmobile.org/mobicom/2024/)
+[![MobiCom 2025](https://img.shields.io/badge/MobiCom-2025-green.svg)](https://sigmobile.org/mobicom/2025/)
 
 **Official repository for the MobiCom 2025 paper: "Vomee -- A Multimodal Sensing Platform for Video, Audio, mmWave and Skeleton Data Capturing"**
 
@@ -121,12 +121,12 @@ capture.save(data, 'output/session_001')
 If you use Vomee in your research, please cite our paper:
 
 ```bibtex
-@inproceedings{vomee2024,
+@inproceedings{vomee2025,
     title={Vomee: A Multimodal Sensing Platform for Video, Audio, mmWave and Skeleton Data Capturing},
     author={[Author Names]},
     booktitle={Proceedings of the 30th Annual International Conference on Mobile Computing and Networking},
     series={MobiCom '24},
-    year={2024},
+    year={2025},
     publisher={ACM},
     doi={[DOI]},
 }
@@ -148,7 +148,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- MobiCom 2024 Program Committee
+- MobiCom 2025 Program Committee
 - [Institution/Lab Name]
 - Hardware partners and sponsors
 
