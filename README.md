@@ -21,7 +21,7 @@ This platform enables researchers and developers to collect rich, synchronized m
 ### Prerequisites
 - Python 3.8 or higher
 - CUDA-capable GPU (recommended)
-- Compatible hardware sensors (see [Hardware Requirements](#hardware-requirements))
+- Compatible hardware sensors (TI 1843)
 
 ### Installation
 
@@ -125,16 +125,15 @@ If you use Vomee in your research, please cite our paper:
     title={Vomee: A Multimodal Sensing Platform for Video, Audio, mmWave and Skeleton Data Capturing},
     author={[Author Names]},
     booktitle={Proceedings of the 30th Annual International Conference on Mobile Computing and Networking},
-    series={MobiCom '24},
+    series={MobiCom '25},
     year={2025},
-    publisher={ACM},
-    doi={[DOI]},
+    publisher={ACM}
 }
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+We welcome contributions! 
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -142,23 +141,11 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - MobiCom 2025 Program Committee
-- [Institution/Lab Name]
 - Hardware partners and sponsors
 
-## 📧 Contact
-
-- **Primary Contact**: [Your Name] - [email@domain.com]
-- **Project Homepage**: [https://weixijia.github.io/Vomee](https://weixijia.github.io/Vomee)
-- **Issues**: [GitHub Issues](https://github.com/weixijia/Vomee/issues)
-
----
 
 <div align="center">
     <b>⭐ Star this repository if you find it useful! ⭐</b>
