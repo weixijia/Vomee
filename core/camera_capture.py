@@ -2,7 +2,7 @@
 Camera Capture Module
 
 Webcam capture with pluggable pose estimation. ViTPose (smallest 's' model) is
-the default skeleton-tracking backend; MediaPipe is available as a fallback.
+the skeleton-tracking backend, running cross-platform (CUDA / Apple MPS / CPU).
 
 The heavy pose model is loaded asynchronously so the camera preview stays live
 while the model initializes, and backend/keypoint-group switches happen without

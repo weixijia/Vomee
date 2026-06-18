@@ -1,9 +1,10 @@
-# Vomee mmWave — Ubuntu Setup & Run Guide (pure-Python 256×255, NO mmWave Studio)
+# Vomee mmWave — Setup & Run Guide: macOS / Ubuntu (pure-Python 256×255, NO mmWave Studio)
 
-> **For a fresh Claude Code session on Ubuntu.** Follow this top-to-bottom to set up a
-> new conda env and run the full pure-Python mmWave capture (256×255 raw ADC) + Vomee GUI
-> on Ubuntu. No mmWave Studio, no Windows, no TI `.exe`. Read §0 first — it prevents you
-> from re-doing solved work or chasing dead ends.
+> **For a fresh Claude Code session on macOS (Apple Silicon) or Ubuntu.** Follow this
+> top-to-bottom to set up a conda env and run the full pure-Python mmWave capture
+> (256×255 raw ADC) + Vomee GUI. No mmWave Studio, no TI `.exe`. **macOS deltas are folded
+> into §2.2** — read them if you're on a Mac. Read §0 first — it prevents you from re-doing
+> solved work or chasing dead ends.
 
 ---
 
@@ -57,7 +58,7 @@ and compute Range-Doppler / Range-Azimuth heatmaps in Vomee. A downstream model 
 
 ---
 
-## 2. Ubuntu software setup (one-time on the new machine)
+## 2. Software setup — macOS / Ubuntu (one-time on the new machine)
 
 ### 2.1 Get the repo
 ```bash
@@ -69,18 +70,27 @@ cd Vomee
 
 ### 2.2 Conda env + dependencies
 ```bash
-conda create -n vomee python=3.9 -y      # 3.10 also fine
+# macOS: you can REUSE an existing env, e.g.  conda activate pose   (then skip the create)
+conda create -n vomee python=3.11 -y     # 3.11-3.13 all fine (mediapipe removed -> no ceiling)
 conda activate vomee
-pip install -r requirements.txt          # PySide6, torch, torchvision, ultralytics,
-                                         # filterpy, scipy, scikit-image, matplotlib,
-                                         # ffmpeg-python, mediapipe, opencv-python, numpy, Pillow
-pip install pyserial                     # REQUIRED for UART control (not in requirements.txt)
-# GPU FFT (only on NVIDIA, e.g. Jetson/dGPU). Match your CUDA major version:
-pip install cupy-cuda12x                 # or cupy-cuda11x ; skip on CPU-only -> NumPy fallback
+pip install -r requirements.txt          # PySide6, torch, torchvision, ultralytics, filterpy,
+                                         # scipy, scikit-image, matplotlib, ffmpeg-python,
+                                         # opencv-python, numpy, Pillow, pyserial
+# ffmpeg BINARY (ViTPose viz):  macOS: brew install ffmpeg   |   Ubuntu: sudo apt install ffmpeg
 ```
-> Vomee's mmWave processor uses CuPy if present, else NumPy. CPU fallback works (slower);
-> `MmWaveCapture.get_frame()` already self-heals from buffer overwrite, so the GUI lags
-> instead of freezing if FFT can't keep up. **GPU strongly recommended** at 167 Mbps.
+> The mmWave FFT runs on **PyTorch**: CUDA on NVIDIA, **CPU on Apple Silicon** (torch.fft is
+> unsupported on MPS), NumPy fallback. **Do NOT install CuPy** (NVIDIA-only; no longer used).
+> `MmWaveCapture.get_frame()` self-heals from buffer overwrite (degrades/lags, never freezes).
+
+> **macOS (Apple Silicon) deltas** for the steps below:
+> - **Serial (§2.5):** no `dialout` group; the radar UART is `/dev/cu.usbmodem*` and the
+>   launcher/trigger **auto-detect it** (XDS110 VID:PID 0451:BEF3) — you usually set no port.
+> - **Static IP (§2.3):** set the DCA1000 NIC to `192.168.33.30 / 255.255.255.0` in
+>   System Settings ▸ Network (Manual), or `sudo ifconfig <en> 192.168.33.30 netmask 255.255.255.0`
+>   (find `<en>` via `networksetup -listallhardwareports`).
+> - **UDP buffer (§2.4):** instead of Linux `net.core.rmem_max`, raise
+>   `sudo sysctl -w kern.ipc.maxsockbuf=8388608`.
+> - **FFT/GPU:** runs on CPU (fast for 256×255); the CuPy/NVIDIA lines below are N/A.
 
 ### 2.3 Network — static IP on the DCA1000 NIC
 Find the Ethernet interface wired to the DCA1000 (`ip link`, look for the one that is the
@@ -202,7 +212,7 @@ shows live camera + 256×255 RA/RD heatmaps. Closing the window sends `sensorSto
 | DCA1000 `alive: None` | NIC not `192.168.33.30/24`; DCA1000 unpowered; cable to wrong port; firewall (`sudo ufw allow` or disable). |
 | No packets on 4098 | `sensorStart` failed; MIPI ribbon loose; NIC IP wrong; another process bound 4098. |
 | Heavy packet loss / `bufferOverWritten` | Raise `net.core.rmem_max` (§2.4); use a Gigabit NIC; install CuPy so FFT keeps up. |
-| GUI heatmaps lag/freeze | Install `cupy-cudaXXx` for GPU FFT (CPU NumPy is slow at 167 Mbps). |
+| GUI heatmaps lag/freeze | FFT can't keep up — use an NVIDIA GPU (torch CUDA) or accept CPU (fine for 256×255). The buffer-overwrite recovery prevents a hard freeze. |
 | Frame size ≠ 2,088,960 | cfg mismatch — `profileCfg ...256...` + `frameCfg 0 1 255 0 100 1 0` + `channelCfg 15 5 0`. |
 
 ---

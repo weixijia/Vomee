@@ -9,8 +9,8 @@ The landmarks dict is JSON-serializable and shares a common schema across
 backends so recordings remain comparable:
 
     {
-        "backend": "vitpose" | "mediapipe",
-        "dataset": "wholebody" | "coco" | "mediapipe_pose",
+        "backend": "vitpose",
+        "dataset": "wholebody" | "coco",
         "keypoint_group": "body" | "body_face" | "body_hands" | "wholebody",
         "image_size": [width, height],
         "persons": {
@@ -31,7 +31,7 @@ import numpy as np
 class PoseBackend(ABC):
     """Abstract base class for all pose-estimation backends."""
 
-    #: Short identifier (e.g. "vitpose", "mediapipe").
+    #: Short identifier (e.g. "vitpose").
     name: str = "base"
 
     @abstractmethod

@@ -149,10 +149,13 @@ def trigger(com='COM4', baud=115200, cfg_file=None, json_file=None, verbose=True
     try:
         if verbose:
             print(f"[trigger] FPGA {dca.read_fpga_version()} alive={dca.sys_alive_check()}")
-        # reset_fpga only (NOT reset_radar — that reboots the flashed firmware and adds
-        # boot-timing risk). The cfg's leading sensorStop + flushCfg reset the config state.
-        dca.reset_fpga(); time.sleep(0.5)
+        # Reboot the radar for a clean RF state. This is REQUIRED for reliability:
+        # after idle time or repeated start/stop, sensorStart returns "Done" but no LVDS
+        # data streams until a hardware reset. reset_radar (RESET_AR_DEV over Ethernet)
+        # reboots the flashed firmware; wait ~2.5 s for it to come back on the CLI UART.
+        dca.reset_radar(); dca.reset_fpga(); time.sleep(2.5)
         radar = RadarUART(com, baud, verbose=verbose)
+        radar.port.reset_input_buffer()        # drop the post-reboot banner
         radar.send_config(cfg_file, start=False)
         r1, r2, r3 = dca.config_fpga(json_file), dca.config_record(json_file), dca.stream_start()
         if verbose:

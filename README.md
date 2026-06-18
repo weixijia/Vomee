@@ -12,7 +12,7 @@ Vomee is a comprehensive multimodal sensing platform designed for synchronized d
 - **Video** - High-resolution camera capture
 - **Audio** - Multi-channel audio recording
 - **mmWave** - Millimeter wave radar sensing
-- **Skeleton** - RGB-extracted skeleton tracking via **ViTPose** (default) or MediaPipe
+- **Skeleton** - RGB-extracted skeleton tracking via **ViTPose** (cross-platform: CUDA / Apple MPS / CPU)
 
 This platform enables researchers and developers to collect rich, synchronized multimodal datasets for various applications including human activity recognition, gesture detection, and environmental sensing.
 
@@ -40,20 +40,20 @@ source venv/bin/activate  # On Windows: venv\Scriptsctivate
 pip install -r requirements.txt
 ```
 
-### AI Agent Setup (one-shot prompt)
+### AI Agent / New-Session Handover (cross-platform: macOS · Ubuntu · Windows)
 
-Using an AI coding assistant (Claude Code, Cursor, Copilot, Gemini…) to deploy this repo? Paste the prompt below:
+Opening a **new Claude Code session** (or any AI assistant) to set up & run Vomee on a fresh machine? **macOS (Apple Silicon) and Ubuntu are first-class targets; Windows is supported.** Paste the prompt below:
 
 > Set up the **Vomee** repository on my machine and launch it.
 > 1. Detect my OS (macOS / Windows / Linux).
-> 2. Create a Python **3.9** environment — prefer conda (`conda create -n vomee python=3.9 -y && conda activate vomee`), else `python -m venv venv` and activate it.
-> 3. Install dependencies: `pip install -r requirements.txt`. This pulls **PySide6** (GUI), **torch, torchvision, ultralytics, filterpy, scipy, scikit-image, matplotlib, ffmpeg-python** (ViTPose engine), **mediapipe** (fallback pose backend), and **opencv-python, numpy, Pillow**.
-> 4. GPU is optional — pose estimation auto-selects **CUDA → Apple MPS → CPU**. Only on an **NVIDIA** machine that will also process mmWave radar, additionally install CuPy matching the CUDA version (`pip install cupy-cuda12x` or `cupy-cuda11x`); on Mac/CPU skip it — the mmWave processor falls back to NumPy.
+> 2. Python env (conda preferred). **On macOS you may reuse an existing env, e.g. `conda activate pose`**; otherwise `conda create -n vomee python=3.11 -y && conda activate vomee` (Python 3.11–3.13 all fine — mediapipe was removed, so there is no Python ceiling).
+> 3. Install deps: `pip install -r requirements.txt` (PySide6, torch, torchvision, ultralytics, filterpy, scipy, scikit-image, matplotlib, ffmpeg-python, opencv-python, numpy, Pillow, and `pyserial` for the mmWave UART). Also install the **ffmpeg binary**: macOS `brew install ffmpeg`, Ubuntu `sudo apt install ffmpeg`.
+> 4. GPU auto-selects. Pose runs **CUDA → Apple MPS → CPU**. The **mmWave FFT runs on PyTorch — CUDA on NVIDIA, CPU on Apple Silicon/elsewhere** (torch.fft is unsupported on MPS), with a NumPy fallback. **Do NOT install CuPy** — it is NVIDIA-only and no longer required.
 > 5. No manual model download needed: the smallest weights (`vitpose-s-wholebody.pth`, `yolov8n.pt`) **auto-download into `./models/` on first launch**.
 > 6. Run `python main.py` and report any errors. On macOS, grant camera permission when prompted.
-> 7. **mmWave radar capture (TI AWR1843BOOST + DCA1000EVM), pure-Python, NO mmWave Studio:** to configure, trigger, and capture raw **256×255** ADC entirely from Python, also `pip install pyserial` and follow the self-contained, agent-followable guide **[`mmwave_pure_python/UBUNTU_SETUP.md`](mmwave_pure_python/UBUNTU_SETUP.md)** — it covers the conda env, static IP `192.168.33.30`, serial `/dev/ttyACM0` @ 921600, `config.py` edits, and step-by-step verification. Then launch radar capture with `python main.py --trigger`. (Read its §0 first — the radar firmware is already flashed and must not be re-flashed or driven by mmWave Studio.)
+> 7. **mmWave radar (TI AWR1843 + DCA1000, pure-Python, NO mmWave Studio):** follow the self-contained, agent-followable guide **[`mmwave_pure_python/SETUP.md`](mmwave_pure_python/SETUP.md)** (macOS/Ubuntu: conda, static IP `192.168.33.30`, **auto-detected** serial port, then run & verify). The radar firmware is already flashed — **do NOT re-flash**. Launch capture with `python main.py --trigger`, or start/stop standalone via `python mmwave_pure_python/mmwave_launcher.py <cfg>` (press 1=start, 2=stop). Read SETUP.md §0 first.
 
-**Required packages** (all in `requirements.txt`): `PySide6`, `torch`, `torchvision`, `ultralytics`, `filterpy`, `scipy`, `scikit-image`, `matplotlib`, `ffmpeg-python`, `mediapipe`, `opencv-python`, `numpy`, `Pillow`. Optional: `cupy-cuda1x` (NVIDIA-only, mmWave GPU FFT), `pyserial` (required for the pure-Python mmWave UART trigger — see [`mmwave_pure_python/UBUNTU_SETUP.md`](mmwave_pure_python/UBUNTU_SETUP.md)).
+**Required packages** (`requirements.txt`): `PySide6`, `torch`, `torchvision`, `ultralytics`, `filterpy`, `scipy`, `scikit-image`, `matplotlib`, `ffmpeg-python`, `opencv-python`, `numpy`, `Pillow`, `pyserial`. Plus the **ffmpeg binary** (`brew`/`apt`). Optional: `cupy-cuda1x` (NVIDIA-only mmWave FFT fast-path; not required — PyTorch handles it cross-platform).
 
 ## Features
 
@@ -71,11 +71,10 @@ Using an AI coding assistant (Claude Code, Cursor, Copilot, Gemini…) to deploy
 
 ## Pose Estimation
 
-Skeleton tracking uses a **pluggable backend**. **ViTPose** is the default; **MediaPipe** is kept as a lightweight fallback. Both can be switched live from the control panel or via CLI flags.
+Skeleton tracking uses **ViTPose**, running cross-platform (**CUDA → Apple MPS → CPU**, auto-selected). The keypoint group can be switched live from the control panel or via a CLI flag.
 
-### Backends
-- **ViTPose (default)** — YOLOv8 person detection + SORT tracking + Vision-Transformer 2D keypoints (vendored under `pose_studio_engine/`). The smallest model (`vitpose-s`) is used by default and runs on **CUDA → Apple MPS → CPU** automatically.
-- **MediaPipe** — 33-landmark single-person body pose, CPU-friendly fallback.
+### Backend
+- **ViTPose** — YOLOv8 person detection + SORT tracking + Vision-Transformer 2D keypoints (vendored under `pose_studio_engine/`). The smallest model (`vitpose-s`) runs on **CUDA → Apple MPS → CPU** automatically.
 
 > ViTPose is a **2D** pose estimator — it outputs `(x, y, confidence)` per keypoint, no depth. For 3D, lift the 2D keypoints with a separate model, use multi-view triangulation, or fuse with the mmWave/depth modalities.
 
@@ -96,8 +95,7 @@ The smallest weights (`vitpose-s-wholebody.pth`, `yolov8n.pt`) live in `./models
 Defaults live in `config.py` under `POSE_PARAMS` (backend, model size, dataset, keypoint group, device). Override at launch:
 
 ```bash
-python main.py --pose-backend vitpose --keypoint-group body
-python main.py --pose-backend mediapipe          # use the fallback
+python main.py --keypoint-group body
 ```
 
 ## Interface
@@ -106,7 +104,7 @@ Vomee ships a desktop dashboard built with **PySide6 + Qt Quick (QML)**:
 
 - **Live preview on launch** — the camera and radar heatmaps stream the moment the app opens; **Start** only begins *recording* (it no longer gates the preview).
 - **Layout** — camera on the left with a live telemetry HUD (engine · device · FPS · sync · frames); Range-Doppler and Range-Azimuth heatmaps stacked on the right; all controls in the top bar.
-- **Live controls** — toggle the skeleton, switch pose backend (ViTPose / MediaPipe) and keypoint group, and start/stop recording without restarting.
+- **Live controls** — toggle the skeleton, switch keypoint group, and start/stop recording without restarting.
 
 ```bash
 python main.py

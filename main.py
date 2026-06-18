@@ -2,7 +2,7 @@
 Vomee Multi-Modal Data Capture System
 
 Main application entry point (PySide6 + Qt Quick / QML UI). Integrates TI IWR1843
-mmWave radar, webcam with ViTPose / MediaPipe skeleton overlay, and synchronized
+mmWave radar, webcam with ViTPose skeleton overlay, and synchronized
 recording.
 
 Usage:
@@ -14,15 +14,10 @@ import time
 import argparse
 from pathlib import Path
 
-# IMPORTANT: import MediaPipe before heavy GPU libs (torch) to avoid loader clashes.
-try:
-    import mediapipe
-    _ = mediapipe.solutions.pose
-    _ = mediapipe.solutions.drawing_utils
-    _ = mediapipe.solutions.drawing_styles
-    print(f"[Init] MediaPipe {mediapipe.__version__} pre-loaded")
-except Exception as e:
-    print(f"[Init] MediaPipe preload skipped: {e}")
+# Apple Silicon: allow any pose-pipeline op unsupported on the MPS backend to fall back
+# to CPU. Set before torch is imported. (The mmWave FFT never uses MPS — see mmwave_processor.)
+import os
+os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
 
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterType
@@ -52,8 +47,8 @@ def parse_args():
     parser.add_argument('--camera-device', type=int, default=None,
                         help='Camera device ID (default: from config, usually 0)')
     parser.add_argument('--pose-backend', type=str, default=None,
-                        choices=['vitpose', 'mediapipe'],
-                        help='Pose backend (default: from config, usually vitpose)')
+                        choices=['vitpose'],
+                        help='Pose backend (default: vitpose)')
     parser.add_argument('--keypoint-group', type=str, default=None,
                         choices=['body', 'body_face', 'body_hands', 'wholebody'],
                         help='Keypoint group (default: from config, usually body)')

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import sys
 sys.path.append('..')
-from config import ADC_PARAMS, CAMERA_PARAMS, MEDIAPIPE_PARAMS
+from config import ADC_PARAMS, CAMERA_PARAMS
 
 
 class Recorder:
@@ -100,7 +100,6 @@ class Recorder:
             "skeleton_enabled": skeleton_enabled,
             "adc_params": ADC_PARAMS,
             "camera_params": CAMERA_PARAMS,
-            "mediapipe_params": MEDIAPIPE_PARAMS if skeleton_enabled else None,
             "software_version": "1.0.0",
             "notes": ""
         }
