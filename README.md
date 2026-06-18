@@ -51,8 +51,9 @@ Using an AI coding assistant (Claude Code, Cursor, Copilot, Gemini…) to deploy
 > 4. GPU is optional — pose estimation auto-selects **CUDA → Apple MPS → CPU**. Only on an **NVIDIA** machine that will also process mmWave radar, additionally install CuPy matching the CUDA version (`pip install cupy-cuda12x` or `cupy-cuda11x`); on Mac/CPU skip it — the mmWave processor falls back to NumPy.
 > 5. No manual model download needed: the smallest weights (`vitpose-s-wholebody.pth`, `yolov8n.pt`) **auto-download into `./models/` on first launch**.
 > 6. Run `python main.py` and report any errors. On macOS, grant camera permission when prompted.
+> 7. **mmWave radar capture (TI AWR1843BOOST + DCA1000EVM), pure-Python, NO mmWave Studio:** to configure, trigger, and capture raw **256×255** ADC entirely from Python, also `pip install pyserial` and follow the self-contained, agent-followable guide **[`mmwave_pure_python/UBUNTU_SETUP.md`](mmwave_pure_python/UBUNTU_SETUP.md)** — it covers the conda env, static IP `192.168.33.30`, serial `/dev/ttyACM0` @ 921600, `config.py` edits, and step-by-step verification. Then launch radar capture with `python main.py --trigger`. (Read its §0 first — the radar firmware is already flashed and must not be re-flashed or driven by mmWave Studio.)
 
-**Required packages** (all in `requirements.txt`): `PySide6`, `torch`, `torchvision`, `ultralytics`, `filterpy`, `scipy`, `scikit-image`, `matplotlib`, `ffmpeg-python`, `mediapipe`, `opencv-python`, `numpy`, `Pillow`. Optional: `cupy-cuda1x` (NVIDIA-only, mmWave GPU FFT).
+**Required packages** (all in `requirements.txt`): `PySide6`, `torch`, `torchvision`, `ultralytics`, `filterpy`, `scipy`, `scikit-image`, `matplotlib`, `ffmpeg-python`, `mediapipe`, `opencv-python`, `numpy`, `Pillow`. Optional: `cupy-cuda1x` (NVIDIA-only, mmWave GPU FFT), `pyserial` (required for the pure-Python mmWave UART trigger — see [`mmwave_pure_python/UBUNTU_SETUP.md`](mmwave_pure_python/UBUNTU_SETUP.md)).
 
 ## Features
 

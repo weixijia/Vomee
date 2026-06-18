@@ -40,6 +40,13 @@ def parse_args():
                         help='Run in camera-only mode (no mmWave radar)')
     parser.add_argument('--no-camera', action='store_true',
                         help='Run without camera (mmWave only)')
+    parser.add_argument('--trigger', action='store_true',
+                        help='Trigger the radar from Python (no mmWave Studio). '
+                             'Sends the .cfg over UART + configures DCA1000.')
+    parser.add_argument('--trigger-cfg', type=str, default=None,
+                        help='Radar .cfg for --trigger (default: config MMWAVE_TRIGGER cfg_file)')
+    parser.add_argument('--trigger-com', type=str, default=None,
+                        help='Radar CLI UART port for --trigger (default: config, e.g. COM4)')
     parser.add_argument('--recording-dir', type=str, default='./recordings',
                         help='Base directory for recordings (default: ./recordings)')
     parser.add_argument('--camera-device', type=int, default=None,
@@ -55,6 +62,30 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    # ── pure-Python radar trigger (replaces mmWave Studio) ───────
+    # Must run BEFORE MmWaveProcessor()/MmWaveCapture read ADC_PARAMS, so the
+    # frame size matches the .cfg (numLoops -> chirps) automatically.
+    import config as _cfg
+    trig = dict(_cfg.MMWAVE_TRIGGER)
+    triggered = False
+    if args.trigger or trig.get('enable'):
+        from core import mmwave_trigger
+        com = args.trigger_com or trig['com_port']
+        baud = trig.get('baud', 115200)
+        cfg_file = args.trigger_cfg or trig['cfg_file']
+        json_file = trig['json_file']
+        print(f"[trigger] starting radar from Python: cfg={cfg_file} com={com}@{baud}")
+        try:
+            n_loops = mmwave_trigger.trigger(com=com, baud=baud, cfg_file=cfg_file, json_file=json_file)
+            if n_loops:
+                _cfg.ADC_PARAMS['chirps'] = n_loops  # keep frame size consistent
+                print(f"[trigger] ADC_PARAMS['chirps'] set to {n_loops} (from frameCfg)")
+            triggered = True
+        except Exception as e:
+            import traceback
+            print(f"[trigger] FAILED: {e}")
+            traceback.print_exc()
 
     app = QGuiApplication(sys.argv)
     app.setApplicationName("Vomee")
@@ -152,6 +183,14 @@ def main():
     app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
     if mmwave_capture:
         mmwave_capture.stop()
+    if triggered and trig.get('stop_on_exit'):
+        try:
+            from core import mmwave_trigger
+            mmwave_trigger.stop_radar(com=args.trigger_com or trig['com_port'],
+                                      baud=trig.get('baud', 115200))
+            print("[trigger] sensorStop sent")
+        except Exception as e:
+            print(f"[trigger] stop_radar skipped: {e}")
     if camera_capture:
         camera_capture.stop()
     if file_writer:

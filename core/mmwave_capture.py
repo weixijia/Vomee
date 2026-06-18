@@ -250,7 +250,12 @@ class MmWaveCapture(threading.Thread):
         with self._lock:
             if self.latest_read_num != 0:
                 if self.buffer_overwritten:
-                    return "bufferOverWritten", 0.0, -1, False
+                    # Consumer fell behind and the circular buffer wrapped. Instead
+                    # of freezing on this error forever (the old behaviour), drop the
+                    # stale backlog and resync to the newest captured frame — correct
+                    # real-time "show latest" semantics, and self-heals after a hiccup.
+                    self.next_read_position = (self.next_cap_position - 1 + self.buffer_size) % self.buffer_size
+                    self.buffer_overwritten = False
             else:
                 self.buffer_overwritten = False
 

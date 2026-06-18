@@ -21,6 +21,19 @@ CAMERA_PARAMS = {
     'fps': 30           # Target frame rate
 }
 
+# Pure-Python mmWave trigger (replaces mmWave Studio). Off by default so the
+# existing Studio workflow is unaffected. Enable with `python main.py --trigger`.
+# When triggering, ADC_PARAMS['chirps'] is auto-set from the .cfg's frameCfg numLoops.
+MMWAVE_TRIGGER = {
+    'enable': False,
+    'com_port': 'COM4',                                       # radar CLI UART (Linux: /dev/ttyACM0)
+    'baud': 921600,                                           # no-DSP studio_cli firmware uses 921600 (mmw_demo was 115200)
+    # No-DSP firmware profile: 256 samples x 255 loops, NO cfar/gui -> full 256x255 raw ADC, no detection-matrix cap.
+    'cfg_file': 'mmwave_pure_python/studio_cli/src/profiles/profile_vomee_256x255_cont.cfg',
+    'json_file': 'mmwave_pure_python/configFiles/cf.json',
+    'stop_on_exit': True,                                     # sensorStop when Vomee closes
+}
+
 # Network Configuration for mmWave Radar
 NETWORK_PARAMS = {
     'pc_ip': '192.168.33.30',       # PC static IP
