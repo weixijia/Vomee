@@ -127,8 +127,8 @@ Headlines:
 ## 3. Test log
 
 > Live hardware tests. **Blocked on a hardware decision** (SOP mode + firmware) —
-> see TEST_PLAN.md. Cannot test the trigger without disrupting the current mmWave
-> Studio stream and physically re-jumpering the IWR1843BOOST.
+> cannot test the trigger without disrupting the current mmWave Studio stream and
+> physically re-jumpering the IWR1843BOOST.
 > ONE non-destructive test is possible now: read-only DCA1000 FPGA version/alive
 > query on UDP 4096 (validates the pure-python DCA1000 control half live). Pending OK.
 
@@ -158,11 +158,10 @@ extension, no mmWave Studio. This is the capture-card half of Path B, proven.
 | `tools/trigger_all.py` | full trigger: reset→UART cfg→DCA cfg→start | built, compiles; needs T3 |
 | `configFiles/vomee_1843.cfg` | RF profile = 1:1 translation of skeleton.lua | built |
 | `configFiles/cf.json` | DCA1000 cfg (lvdsMode=2, 5µs delay) | built |
-| `HARDWARE_SETUP.md` | the one-time SOP/firmware step (user action) | — |
 
 **Blocking checkpoint:** radar is in Studio mode (rf_eval fw in RAM). Path B needs
 the board physically in functional mode (SOP0) running flashed mmw_demo. That's the
-only step I can't perform from code. See HARDWARE_SETUP.md.
+only step I can't perform from code. (Setup + re-flash steps: see SETUP.md §9.)
 
 ## 5. LIVE HARDWARE RESULTS (2026-06-17, AWR1843BOOST functional mode)
 Hardware confirmed: AWR1843BOOST + DCA1000, SOP slide switch (LEFT=ON). User flipped
