@@ -26,7 +26,7 @@ CAMERA_PARAMS = {
 # When triggering, ADC_PARAMS['chirps'] is auto-set from the .cfg's frameCfg numLoops.
 MMWAVE_TRIGGER = {
     'enable': False,
-    'com_port': 'COM4',                                       # radar CLI UART (Linux: /dev/ttyACM0)
+    'com_port': 'auto',                                       # radar CLI UART; 'auto' detects the XDS110 (Linux /dev/ttyACM0, macOS /dev/cu.usbmodem*, Windows COMx). Override with --trigger-com.
     'baud': 921600,                                           # no-DSP studio_cli firmware uses 921600 (mmw_demo was 115200)
     # No-DSP firmware profile: 256 samples x 255 loops, NO cfar/gui -> full 256x255 raw ADC, no detection-matrix cap.
     'cfg_file': 'mmwave_pure_python/studio_cli/src/profiles/profile_vomee_256x255_cont.cfg',

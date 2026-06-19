@@ -19,6 +19,45 @@ import json
 import time
 
 import serial
+from serial.tools import list_ports
+
+
+XDS110_VIDPID = (0x0451, 0xBEF3)   # TI XDS110 "Application/User UART" = the radar CLI port
+
+
+# ---------------- serial port auto-detection (cross-platform) ----------------
+def find_radar_port():
+    """Auto-detect the radar CLI UART (XDS110) on Linux/macOS/Windows, or None.
+
+    Linux -> /dev/ttyACM0   macOS -> /dev/cu.usbmodem*   Windows -> COMx
+    (Mirrors mmwave_launcher.find_radar_port; kept here so the production trigger
+    path is self-contained and import-safe from main.py.)
+    """
+    xds = [p for p in list_ports.comports() if (p.vid, p.pid) == XDS110_VIDPID]
+
+    def is_app_uart(p):
+        blob = ' '.join(x for x in (p.description, getattr(p, 'interface', None),
+                                    getattr(p, 'product', None)) if x)
+        return ('Application' in blob) or ('User UART' in blob)
+
+    cands = [p for p in xds if is_app_uart(p)] or xds
+    if not cands:
+        return None
+    # macOS: prefer the callout device /dev/cu.* ; otherwise lowest name (ttyACM0 < ttyACM1).
+    cands.sort(key=lambda p: (0 if str(p.device).startswith('/dev/cu.') else 1, str(p.device)))
+    return cands[0].device
+
+
+def _resolve_port(com):
+    """Return an explicit serial device, auto-detecting when com is None/'auto'/''."""
+    if com and com != 'auto':
+        return com
+    dev = find_radar_port()
+    if not dev:
+        raise RuntimeError("could not auto-detect the radar CLI UART (XDS110 0451:BEF3); "
+                           "plug in the radar USB, or pass --trigger-com / set "
+                           "MMWAVE_TRIGGER['com_port'] explicitly")
+    return dev
 
 
 # ---------------- DCA1000 control (UDP, port 4096) ----------------
@@ -109,9 +148,9 @@ def parse_num_loops(cfg_path):
 
 
 class RadarUART:
-    def __init__(self, com='COM4', baud=115200, verbose=False):
+    def __init__(self, com='auto', baud=115200, verbose=False):
         self.verbose = verbose
-        self.port = serial.Serial(com, baud, timeout=0.3)
+        self.port = serial.Serial(_resolve_port(com), baud, timeout=0.3)
         time.sleep(0.2)
         self.port.reset_input_buffer()
 
@@ -142,12 +181,14 @@ class RadarUART:
             pass
 
 
-def trigger(com='COM4', baud=115200, cfg_file=None, json_file=None, verbose=True):
+def trigger(com='auto', baud=115200, cfg_file=None, json_file=None, verbose=True):
     """Run the full trigger. Returns numLoops parsed from the cfg (for ADC_PARAMS)."""
+    com = _resolve_port(com)
     dca = DCA1000()
     radar = None
     try:
         if verbose:
+            print(f"[trigger] radar CLI UART: {com}")
             print(f"[trigger] FPGA {dca.read_fpga_version()} alive={dca.sys_alive_check()}")
         # Reboot the radar for a clean RF state. This is REQUIRED for reliability:
         # after idle time or repeated start/stop, sensorStart returns "Done" but no LVDS
@@ -171,10 +212,10 @@ def trigger(com='COM4', baud=115200, cfg_file=None, json_file=None, verbose=True
             radar.close()
 
 
-def stop_radar(com='COM4', baud=115200):
+def stop_radar(com='auto', baud=115200):
     """Stop chirping on shutdown (best-effort)."""
     try:
-        r = RadarUART(com, baud, verbose=False)
+        r = RadarUART(com, baud, verbose=False)  # RadarUART resolves 'auto' via _resolve_port
         r.stop_sensor()
         r.close()
     except Exception:

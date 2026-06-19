@@ -98,8 +98,8 @@ class MmWaveProcessor:
         padded[:, :frame.shape[1], :] = frame
         fft = torch.fft.fftshift(torch.fft.fftn(padded), dim=(0, 1))
         power = fft.abs() ** 2
-        rd = self._nf_t(torch.log10(power.sum(1)).T, True)                    # (range, doppler)
-        ra = self._nf_t(torch.log10(power.sum(0)).T, True)                    # (range, azimuth)
+        rd = self._nf_t(torch.log10(power.sum(1)).T, False)                   # (range, doppler) — range 0 (near) at BOTTOM
+        ra = self._nf_t(torch.log10(power.sum(0)).T, False)                   # (range, azimuth) — range 0 (near) at BOTTOM (matches RD)
         da = self._nf_t(torch.log10(power.sum(2)).T, False)                   # (azimuth, doppler)
         return rd.cpu().numpy(), ra.cpu().numpy(), da.cpu().numpy()
 
@@ -119,8 +119,8 @@ class MmWaveProcessor:
         frame = np.pad(frame, ((0, 0), (0, self.num_angle_bins - d2.shape[2]), (0, 0)), mode='constant')
         fft = np.fft.fftshift(np.fft.fftn(frame), axes=(0, 1))
         power = np.abs(fft) ** 2
-        rd = self._nf_n(np.log10(power.sum(1)).T, True)
-        ra = self._nf_n(np.log10(power.sum(0)).T, True)
+        rd = self._nf_n(np.log10(power.sum(1)).T, False)   # range 0 (near) at BOTTOM
+        ra = self._nf_n(np.log10(power.sum(0)).T, False)   # range 0 (near) at BOTTOM (matches RD)
         da = self._nf_n(np.log10(power.sum(2)).T, False)
         return rd, ra, da
 
