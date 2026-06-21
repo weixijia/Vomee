@@ -147,12 +147,12 @@ This is the same architecture pyRadar uses for AWR2243 — we adapt it to xWR184
 
 ## 6. Inventory — exact paths, devices, configs
 
-### rf_eval firmware (have it on the Windows install — COPY TO UBUNTU)
-- `C:\ti\mmwave_studio_02_01_01_00\rf_eval_firmware\radarss\xwr18xx_radarss.bin` — **35,728 B**
-- `C:\ti\mmwave_studio_02_01_01_00\rf_eval_firmware\masterss\xwr18xx_masterss.bin` — **52,904 B**
-- ⚠️ These live on the Windows `C:\ti` install. **Before wiping/dual-booting, copy both `.bin` to a safe
-  place** (USB/repo `mmwave_pure_python/firmware/`). They also ship with the mmWave SDK / mmWave-DFP and
-  can be re-downloaded from TI, but having the exact files is easiest. Verify sizes above after copy.
+### rf_eval firmware — NOW COMMITTED IN THIS REPO ✅
+- **`mmwave_pure_python/firmware/xwr18xx_radarss.bin`** — **35,728 B** (RadarSS/BSS)
+- **`mmwave_pure_python/firmware/xwr18xx_masterss.bin`** — **52,904 B** (MSS)
+- Provenance in `mmwave_pure_python/firmware/README.md`. Originals also at the Windows install
+  `C:\ti\mmwave_studio_02_01_01_00\rf_eval_firmware\{radarss,masterss}\`; ship with TI mmWave-DFP/SDK.
+- They travel with the repo → the Ubuntu clone already has them, no manual copy needed.
 
 ### FTDI SPI master (the DCA1000's FT4232H)
 - `VID:PID 0451:FD03`, descriptor **"AR-DevPack-EVM-012"**, 4 channels A/B/C/D.
@@ -281,9 +281,10 @@ The SPI path reads config from `mmwaveconfig.txt` (parsed by `mmw_config.c`, key
 
 ## 8. skeleton.lua = the exact xWR1843 SPI/mmwavelink reference
 
-`F:\mmwave_cam2.11\lua\skeleton.lua` (Windows) is the **authoritative sequence for OUR device**. Each
+**`mmwave_pure_python/reference/lua/skeleton.lua`** (committed in this repo; original at
+`F:\mmwave_cam2.11\lua\skeleton.lua` on Windows) is the **authoritative sequence for OUR device**. Each
 `ar1.*` is a thin wrapper over mmWaveLink. The port should follow THIS order (not the 2243 example's
-quirks):
+quirks). (Two variants also copied: `clothes_mmw_start_trigger.lua`, `mmw_start_cam.lua`.)
 
 ```
 FullReset → SOPControl(2) → Connect(921600) → frequencyBandSelection("77G")
