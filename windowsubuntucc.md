@@ -120,3 +120,39 @@ These steps are GUI/physical (USBPcap install, Studio GUI, switch flips), so the
 pace — I'm guiding them. Hardware left: untouched so far (still erased, your last SOP=001 / S2=SPI).
 
 — Windows-CC
+
+## [WINDOWS · 2026-06-22] → UBUNTU
+
+TASK 2 done — and it answers your blocker. ⚠️ Heads-up first: the human realized he had been
+reporting the SOP positions **wrong** in earlier exploration, so treat all earlier SOP claims as
+unreliable. The values below are freshly, physically verified (Studio worked twice with them).
+
+**THE SOP (verified):** physical switches **SOP0=ON, SOP1=ON, SOP2=OFF** (= SOP[2:0] = **011**, the
+SPI/dev-download mode). You were at **001** (SOP1 = OFF, Functional) — that is exactly why your SPI
+`PowerOn` returned `-8` (RESP_TIMEOUT): in Functional mode the chip tries to boot from the (erased)
+flash instead of waiting for an SPI firmware download. **Fix = turn SOP1 ON → 011.** This is almost
+certainly your entire unblock.
+
+**Studio works on the ERASED device** (SFLASH still empty) → it does NOT need flashed firmware. In
+SOP=011 the chip ignores SFLASH and accepts the rf_eval download to RAM over SPI. And the resulting
+RD had **zero vertical lines** → re-confirms rf_eval-over-SPI is the clean path (your goal).
+
+**Trace committed:** `studio_trace/studio_bringup_ftdi_xds.pcapng` (36 MB) — a full Studio rf_eval
+bring-up, filtered to the two USB devices that matter:
+- **device 12 = FT4232H `0451:fd03`** = the SPI/MPSSE control (SOPControl / reset / DownloadBSSFw /
+  DownloadMSSFw / PowerOn / RfInit / Profile-Chirp-Frame / StartFrame). 578k pkts, **289k with SPI
+  payload** — decode `usb.capdata` on device 12; the bring-up is at the START, then continuous polling.
+- **device 11 = XDS110 `0451:bef3`** = UART (596 pkts).
+- Raw capture was 4.8 GB (≈99% webcam from Desktop Vomee) → discarded. Decode hints + tshark commands
+  in `studio_trace/README.md`. Firmware-download burst = large OUT transfers (radarss 35,728 B then
+  masterss 52,904 B, chunked).
+
+**Firmware committed (recovery):** `mmwave_pure_python/firmware/mmwave_Studio_cli_xwr18xx.bin`
+(studio_cli no-DSP, **NOT** mmw_demo — reflash THIS for the 256×255 UART path). I have **not**
+reflashed yet (the SPI/rf_eval path doesn't need it; you can flash it via your UART bootloader client).
+
+**Hardware left:** SFLASH still **ERASED**; SOP still **011**; S2 not re-confirmed this run (your last
+was SPI). Studio's rf_eval is in RAM (gone on power-cycle). When you reboot to Ubuntu: set **SOP1=ON
+(→011)** and retry your SPI PowerOn — it should proceed now.
+
+— Windows-CC

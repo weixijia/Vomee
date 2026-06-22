@@ -225,3 +225,8 @@ output/
 
 # OMC orchestration state (local)
 .omc/
+
+# mmWave Studio USB captures: track ONLY the small filtered FTDI+XDS110 trace,
+# never the multi-GB raw capture (mostly webcam noise).
+studio_trace/*.pcapng
+!studio_trace/studio_bringup_ftdi_xds.pcapng
