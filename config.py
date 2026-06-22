@@ -13,6 +13,19 @@ ADC_PARAMS = {
     'bytes': 2          # 16-bit integers
 }
 
+# RD/RA range-axis orientation for the processor.
+#   False = preserved fft.py orientation (unchanged; what the regression golden + the pure-Python
+#           capture use). For mmWave-Studio-sourced frames this renders near (range 0) at the TOP.
+#   True  = flip so near is at the BOTTOM (Studio frames are range-mirrored vs the pure-Python path).
+# ⚠️ This MUST match the orientation the ML model was TRAINED on (mmWave Studio recordings). Do NOT
+# set by visual preference — verify against a real training-data RD sample first. Same array is
+# displayed AND fed to the model AND written to HDF5, so a wrong value silently corrupts model input.
+# VERIFIED 2026-06-22: =True matches the model's training data byte-for-byte. Training RDs were made by
+# the original Studio-era mmwave_silent/fft.py, which always flips RD/RA [::-1] (DA not flipped). Proof:
+# our processor(flip_range=True) on a training raw frame == that session's saved RD/*.npy to max-abs
+# 1.2e-7; flip_range=False differed by 0.57.
+MMWAVE_RD_FLIP_RANGE = True
+
 # Camera Parameters
 CAMERA_PARAMS = {
     'device': 0,        # Camera device ID (changed from 1 to 0)

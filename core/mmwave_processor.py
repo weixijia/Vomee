@@ -53,8 +53,12 @@ def _pick_device():
 class MmWaveProcessor:
     """3D-FFT processor producing normalized RD/RA/DA heatmaps from raw ADC."""
 
-    def __init__(self, num_angle_bins: int = 256):
+    def __init__(self, num_angle_bins: int = 256, flip_range: bool = False):
         self.num_angle_bins = num_angle_bins
+        # flip_range: put range 0 (near) at BOTTOM. The default (False) is the verified orientation
+        # for the pure-Python/studio_cli capture. mmWave-Studio-sourced frames (received via
+        # --no-trigger) have the range axis mirrored (different ADC I/Q-interleave), so set True there.
+        self.flip_range = flip_range
         self.adc_params = ADC_PARAMS
         self.chirps = ADC_PARAMS['chirps']
         self.rx = ADC_PARAMS['rx']
@@ -98,9 +102,9 @@ class MmWaveProcessor:
         padded[:, :frame.shape[1], :] = frame
         fft = torch.fft.fftshift(torch.fft.fftn(padded), dim=(0, 1))
         power = fft.abs() ** 2
-        rd = self._nf_t(torch.log10(power.sum(1)).T, False)                   # (range, doppler) — range 0 (near) at BOTTOM
-        ra = self._nf_t(torch.log10(power.sum(0)).T, False)                   # (range, azimuth) — range 0 (near) at BOTTOM (matches RD)
-        da = self._nf_t(torch.log10(power.sum(2)).T, False)                   # (azimuth, doppler)
+        rd = self._nf_t(torch.log10(power.sum(1)).T, self.flip_range)         # (range, doppler) — near at BOTTOM
+        ra = self._nf_t(torch.log10(power.sum(0)).T, self.flip_range)         # (range, azimuth) — near at BOTTOM (matches RD)
+        da = self._nf_t(torch.log10(power.sum(2)).T, False)                   # (azimuth, doppler) — no range axis
         return rd.cpu().numpy(), ra.cpu().numpy(), da.cpu().numpy()
 
     @staticmethod
@@ -119,8 +123,8 @@ class MmWaveProcessor:
         frame = np.pad(frame, ((0, 0), (0, self.num_angle_bins - d2.shape[2]), (0, 0)), mode='constant')
         fft = np.fft.fftshift(np.fft.fftn(frame), axes=(0, 1))
         power = np.abs(fft) ** 2
-        rd = self._nf_n(np.log10(power.sum(1)).T, False)   # range 0 (near) at BOTTOM
-        ra = self._nf_n(np.log10(power.sum(0)).T, False)   # range 0 (near) at BOTTOM (matches RD)
+        rd = self._nf_n(np.log10(power.sum(1)).T, self.flip_range)   # near at BOTTOM
+        ra = self._nf_n(np.log10(power.sum(0)).T, self.flip_range)   # near at BOTTOM (matches RD)
         da = self._nf_n(np.log10(power.sum(2)).T, False)
         return rd, ra, da
 

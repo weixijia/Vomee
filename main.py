@@ -104,7 +104,13 @@ def main():
     from recording.file_writer import FileWriter
 
     controller = AppController()
-    controller.set_mmwave_processor(MmWaveProcessor())
+    # RD/RA range orientation. MUST match the orientation the ML model was trained on (mmWave Studio
+    # data). mmWave-Studio-sourced frames (received via --no-trigger) are range-mirrored vs the
+    # pure-Python capture, but whether to flip depends on what the *training* pipeline produced — so
+    # this is an explicit config flag (default False = preserved fft.py orientation), NOT auto-flipped.
+    # Confirm against a training-data RD sample before changing. See config.MMWAVE_RD_FLIP_RANGE.
+    flip_range = getattr(_cfg, 'MMWAVE_RD_FLIP_RANGE', False)
+    controller.set_mmwave_processor(MmWaveProcessor(flip_range=flip_range))
     controller.set_recorder(Recorder(args.recording_dir))
 
     file_writer = FileWriter()
