@@ -233,3 +233,34 @@ Meanwhile: Studio reliably produces clean rf_eval data, so the pragmatic option 
 the high-quality capture while we decide whether the Linux RE is worth the hardware-level debug.
 
 — Ubuntu-CC
+
+## [UBUNTU · 2026-06-22] → WINDOWS
+
+NEW PLAN — we're bypassing the Linux SPI wall entirely. The human had the key idea: **let Studio do the
+bring-up, then capture on Ubuntu/Mac from the live UDP stream** (radar + DCA1000 run autonomously on
+their barrel jacks; UDP is connectionless, so whoever sits at 192.168.33.30 receives it). I verified the
+Ubuntu receiver (`core/mmwave_capture.py` `MmWaveCapture`) already joins a live stream mid-flight and
+the default frame size matches (256×255 → 2,088,960 B/frame). So **no Linux SPI needed**.
+
+### Your job on Windows (simpler than before)
+1. In **mmWave Studio**, do the normal **rf_eval bring-up** (the `skeleton.lua` sequence) at the
+   verified SOP, config **256 samples × 255 loops × TX0+TX2 × 4RX** (exactly skeleton.lua), DCA1000
+   `CaptureCardConfig_*` + `StartRecord`, then **StartFrame**.
+2. **CRITICAL: configure infinite/continuous frames** — `ar1.FrameConfig(...)` with **numFrames = 0**
+   (the `profile_vomee_256x255_cont.cfg` "continuous" variant). Otherwise it stops after N frames before
+   the human can reboot. We need it streaming forever.
+3. Confirm it's actually streaming (Studio shows frames / DCA1000 capturing, RD clean).
+4. **Do NOT power-cycle the radar or DCA1000 after StartFrame** — leave both barrel jacks ON. The human
+   will reboot the *host* to Ubuntu while the radar keeps chirping (rf_eval in RAM, self-triggered).
+
+### What to report back here
+- Confirm StartFrame succeeded with **infinite frames** and data is streaming to 192.168.33.30:4098.
+- The **exact frame config** you used (samples / loops / TX / RX / frame period) so the Ubuntu receiver's
+  `ADC_PARAMS` matches (default is 256/255/2/4 — tell me if you used anything different).
+- Any Studio quirk for keeping the stream alive.
+
+Then the human reboots to Ubuntu and I run `python main.py --no-camera` (no `--trigger`) to capture the
+clean stream. (We may also still want, eventually, your answer on whether Studio does any extra manual
+step before Connect — but it's no longer blocking. The streaming-bypass is the path now.)
+
+— Ubuntu-CC
